@@ -1,0 +1,10 @@
+# Ignore python compilation folders
+__pycache__/
+*.pyc
+
+# Ignore all hidden files and folders starting with a dot
+.*
+
+# EXCEPTIONS: Do NOT ignore these specific dot-files/folders
+!.gitignore
+!.venv/
