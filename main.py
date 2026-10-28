@@ -5,6 +5,7 @@ from activation_fxns import *
 from forward_pass import *
 from update_params import *
 from data import *
+import pandas as pd
 
 
 def initialize_network(network_str, num_layers):
@@ -36,16 +37,21 @@ print("input x, shape (4,):", input)
 
 network_str = {
     0: 4,  # input
-    1: (3, 4),  # hidden 1
-    2: (2, 3),  # output
+    1: (3, 4),  # hidden 1 - 3 neurons connected to 4 input neurons
+    2: (3, 3),  # output 3 neurons connected to 3 hidden neurons
 }
 
-y_full = labels()
-input_full = inputs()
+y_full_train = return_train_labels()
+input_full_train = iris_train_data()
 
-print("(y, input)", (y_full, input_full))
-y = y_full[1]
-input = input_full[1]
+y_full_test = return_test_labels()
+input_full_test = iris_test_data()
+print("y full is; ")
+# print(y_full_train)
+
+print("input full is; ")
+# print(input_full_train)
+
 cost_list = list()
 grad_cost_list = list()
 print(network_str[1][0])
@@ -59,7 +65,7 @@ weight_hidden, weight_output, bias_hidden, bias_output = initialize_network(
 )
 
 
-def one_pass(input, weight_hidden, weight_output, bias_hidden, bias_output, sigmoid, sigmoid_derivative, quad_cost_fxn, y):
+def one_pass(neta, input, weight_hidden, weight_output, bias_hidden, bias_output, sigmoid, sigmoid_derivative, quad_cost_fxn, y):
 
     # Forward pass
     z1, a1, z2, a2, activations_list, zs_list, sigmoid_derivative_list, cost_fxn, grad_cost_fxn = forward_pass(input,
@@ -70,46 +76,44 @@ def one_pass(input, weight_hidden, weight_output, bias_hidden, bias_output, sigm
                                                                                                                sigmoid,
                                                                                                                sigmoid_derivative,
                                                                                                                quad_cost_fxn, y)
-    # Update cost_fxn
-    # store_and_print_costs(
-    # cost_fxn, grad_cost_fxn, cost_list, grad_cost_list)
 
-    # backward_pass
     delta_output_layer, delta_hidden_layer, dC_db_hidden, dC_db_output, dC_dw_hidden, dC_dw_output = do_backprop(
         grad_cost_fxn, sigmoid_derivative_list, weight_output, activations_list)
 
     # Update parameters
-    neta = 0.5
+
     weight_hidden, weight_output, bias_hidden, bias_output = update_params(
         neta, weight_hidden, weight_output, dC_dw_hidden, dC_dw_output, dC_db_hidden, dC_db_output, bias_hidden, bias_output)
     # print(weight_hidden)
     store_and_print_costs(
         cost_fxn, grad_cost_fxn, cost_list, grad_cost_list)
+
     return [weight_hidden, weight_output, bias_hidden, bias_output, a2]
 
 
 # outer loop to train the model on data multiple times
 num_epochs = 15
-for J in range(num_epochs):
-    for i in range(len(input_full)):
+neta = 0.5
+for j in range(num_epochs):
+    for i in range(len(input_full_train)):
         # for j in range(i, len(input_full)):
         # now we want to do one_pass (forawrd, backprop, update, cost_list) for each training example, like this
-        weight_hidden, weight_output, bias_hidden, bias_output, network_output = one_pass(input_full[i], weight_hidden, weight_output, bias_hidden,
-                                                                                          bias_output, sigmoid, sigmoid_derivative, quad_cost_fxn, y_full[i])
+        weight_hidden, weight_output, bias_hidden, bias_output, network_output = one_pass(neta, input_full_train[i], weight_hidden, weight_output, bias_hidden,
+                                                                                          bias_output, sigmoid, sigmoid_derivative, quad_cost_fxn, y_full_train[i])
         # network_output_list.append(network_output)
 
-
+# print("network output is: ", network_output)
 network_output_list = list()
 
-for j in range(len(input_full)):
-    z1, a1, z2, a2, activations_list, zs_list, sigmoid_derivative_list, cost_fxn, grad_cost_fxn = forward_pass(input_full[j],
+for j in range(len(input_full_test)):
+    z1, a1, z2, a2, activations_list, zs_list, sigmoid_derivative_list, cost_fxn, grad_cost_fxn = forward_pass(input_full_test[j],
                                                                                                                weight_hidden,
                                                                                                                weight_output,
                                                                                                                bias_hidden,
                                                                                                                bias_output,
                                                                                                                sigmoid,
                                                                                                                sigmoid_derivative,
-                                                                                                               quad_cost_fxn, y_full[j])
+                                                                                                               quad_cost_fxn, y_full_test[j])
 
     network_output_list.append(a2)
 
@@ -121,18 +125,13 @@ def convert_one_hot_to_digit(network_output_list, y_full):
         network_output_list[i] = np.zeros_like(
             network_output_list[i]).astype(int)
         network_output_list[i][max_index] = 1
-    print(network_output_list)
+#     print(network_output_list)
     y_full = np.array(y_full)
-    print(y_full)
-    matches = (network_output_list == y_full)
+#     print(y_full)
+    matches = (network_output_list == y_full_test)
     accuracy = matches.mean()
-    print("(y, network_output)", (y_full, network_output_list))
+#     print("(y, network_output)", (y_full_test, network_output_list))
     print("Accuracy is: ", accuracy)
 
 
-# for i in range(len(network_output_list)):
-#     print("getting here")
-convert_one_hot_to_digit(network_output_list, y_full)
-# print("(y, network_output)", y_full[i], network_output_list[i])
-
-# matches = (NET == ground_truth)
+convert_one_hot_to_digit(network_output_list, y_full_test)

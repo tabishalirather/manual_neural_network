@@ -40,10 +40,12 @@ network_str = {
     2: (2, 3),  # output
 }
 
-y_full = labels()
-input_full = inputs()
+y_full = iris_test_data()
+input_full = iris_train_data()
 
-print("(y, input)", (y_full, input_full))
+# print("(y, input)", (y_full, input_full))
+print("Input: ", input_full)
+print("labels", y_full)
 y = y_full[1]
 input = input_full[1]
 cost_list = list()
@@ -89,7 +91,7 @@ def one_pass(input, weight_hidden, weight_output, bias_hidden, bias_output, sigm
 
 
 # outer loop to train the model on data multiple times
-num_epochs = 100
+num_epochs = 10
 for J in range(num_epochs):
     for i in range(len(input_full)):
         # for j in range(i, len(input_full)):
