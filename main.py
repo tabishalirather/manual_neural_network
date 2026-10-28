@@ -37,8 +37,8 @@ print("input x, shape (4,):", input)
 
 network_str = {
     0: 4,  # input
-    1: (3, 4),  # hidden 1 - 3 neurons connected to 4 input neurons
-    2: (3, 3),  # output 3 neurons connected to 3 hidden neurons
+    1: (5, 4),  # hidden 1 - 3 neurons connected to 4 input neurons
+    2: (3, 5),  # output 3 neurons connected to 3 hidden neurons
 }
 
 y_full_train = return_train_labels()
@@ -128,7 +128,8 @@ def convert_one_hot_to_digit(network_output_list, y_full):
 #     print(network_output_list)
     y_full = np.array(y_full)
 #     print(y_full)
-    matches = (network_output_list == y_full_test)
+    matches = (np.argmax(network_output_list, axis=1)
+               == np.argmax(y_full_test, axis=1))
     accuracy = matches.mean()
 #     print("(y, network_output)", (y_full_test, network_output_list))
     print("Accuracy is: ", accuracy)
