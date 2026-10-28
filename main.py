@@ -40,11 +40,12 @@ network_str = {
     2: (2, 3),  # output
 }
 
-y = labels()[1]
-input = inputs()[1]
+y_full = labels()
+input_full = inputs()
 
-print("(y, input)", (y, input))
-
+print("(y, input)", (y_full, input_full))
+y = y_full[1]
+input = input_full[1]
 cost_list = list()
 grad_cost_list = list()
 print(network_str[1][0])
@@ -87,22 +88,51 @@ def one_pass(input, weight_hidden, weight_output, bias_hidden, bias_output, sigm
     return [weight_hidden, weight_output, bias_hidden, bias_output, a2]
 
 
-for i in range(10):
-    weight_hidden, weight_output, bias_hidden, bias_output, network_output = one_pass(input, weight_hidden, weight_output, bias_hidden,
-                                                                                      bias_output, sigmoid, sigmoid_derivative, quad_cost_fxn, y)
-
-print(network_output)
-
-
-def convert_one_hot_to_digit(network_output):
-    network_output = np.round(network_output).astype(int)
-
-    # for i in range(len(network_output)):
-    #     if network_output[i] <= 0.5:
-    #         network_output[i] = 0
-    #     else:
-    #         network_output[i] = 1
-    print(network_output)
+# outer loop to train the model on data multiple times
+num_epochs = 15
+for J in range(num_epochs):
+    for i in range(len(input_full)):
+        # for j in range(i, len(input_full)):
+        # now we want to do one_pass (forawrd, backprop, update, cost_list) for each training example, like this
+        weight_hidden, weight_output, bias_hidden, bias_output, network_output = one_pass(input_full[i], weight_hidden, weight_output, bias_hidden,
+                                                                                          bias_output, sigmoid, sigmoid_derivative, quad_cost_fxn, y_full[i])
+        # network_output_list.append(network_output)
 
 
-convert_one_hot_to_digit(network_output)
+network_output_list = list()
+
+for j in range(len(input_full)):
+    z1, a1, z2, a2, activations_list, zs_list, sigmoid_derivative_list, cost_fxn, grad_cost_fxn = forward_pass(input_full[j],
+                                                                                                               weight_hidden,
+                                                                                                               weight_output,
+                                                                                                               bias_hidden,
+                                                                                                               bias_output,
+                                                                                                               sigmoid,
+                                                                                                               sigmoid_derivative,
+                                                                                                               quad_cost_fxn, y_full[j])
+
+    network_output_list.append(a2)
+
+
+def convert_one_hot_to_digit(network_output_list, y_full):
+    for i in range(len(network_output_list)):
+        max_index = np.argmax(network_output_list[i])
+        # network_output = np.round(network_output).astype(int)
+        network_output_list[i] = np.zeros_like(
+            network_output_list[i]).astype(int)
+        network_output_list[i][max_index] = 1
+    print(network_output_list)
+    y_full = np.array(y_full)
+    print(y_full)
+    matches = (network_output_list == y_full)
+    accuracy = matches.mean()
+    print("(y, network_output)", (y_full, network_output_list))
+    print("Accuracy is: ", accuracy)
+
+
+# for i in range(len(network_output_list)):
+#     print("getting here")
+convert_one_hot_to_digit(network_output_list, y_full)
+# print("(y, network_output)", y_full[i], network_output_list[i])
+
+# matches = (NET == ground_truth)
