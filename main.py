@@ -4,6 +4,7 @@ from backprop import *
 from activation_fxns import *
 from forward_pass import *
 from update_params import *
+from data import *
 
 
 def initialize_network(network_str, num_layers):
@@ -39,9 +40,15 @@ network_str = {
     2: (2, 3),  # output
 }
 
-costs_lists = list()
+y = labels()[1]
+input = inputs()[1]
+
+print("(y, input)", (y, input))
+
+cost_list = list()
+grad_cost_list = list()
 print(network_str[1][0])
-input = np.ones(network_str[0])
+
 
 # shape_input = 4
 
@@ -51,151 +58,51 @@ weight_hidden, weight_output, bias_hidden, bias_output = initialize_network(
 )
 
 
-y = [0, 1]
+def one_pass(input, weight_hidden, weight_output, bias_hidden, bias_output, sigmoid, sigmoid_derivative, quad_cost_fxn, y):
+
+    # Forward pass
+    z1, a1, z2, a2, activations_list, zs_list, sigmoid_derivative_list, cost_fxn, grad_cost_fxn = forward_pass(input,
+                                                                                                               weight_hidden,
+                                                                                                               weight_output,
+                                                                                                               bias_hidden,
+                                                                                                               bias_output,
+                                                                                                               sigmoid,
+                                                                                                               sigmoid_derivative,
+                                                                                                               quad_cost_fxn, y)
+    # Update cost_fxn
+    # store_and_print_costs(
+    # cost_fxn, grad_cost_fxn, cost_list, grad_cost_list)
+
+    # backward_pass
+    delta_output_layer, delta_hidden_layer, dC_db_hidden, dC_db_output, dC_dw_hidden, dC_dw_output = do_backprop(
+        grad_cost_fxn, sigmoid_derivative_list, weight_output, activations_list)
+
+    # Update parameters
+    neta = 0.5
+    weight_hidden, weight_output, bias_hidden, bias_output = update_params(
+        neta, weight_hidden, weight_output, dC_dw_hidden, dC_dw_output, dC_db_hidden, dC_db_output, bias_hidden, bias_output)
+    # print(weight_hidden)
+    store_and_print_costs(
+        cost_fxn, grad_cost_fxn, cost_list, grad_cost_list)
+    return [weight_hidden, weight_output, bias_hidden, bias_output, a2]
 
 
-# Forward pass
-z1, a1, z2, a2, activations_list, zs_list, sigmoid_derivative_list, cost_fxn, grad_cost_fxn = compute_singals(input,
-                                                                                                              weight_hidden,
-                                                                                                              weight_output,
-                                                                                                              bias_hidden,
-                                                                                                              bias_output,
-                                                                                                              sigmoid,
-                                                                                                              sigmoid_derivative,
-                                                                                                              quad_cost_fxn)
+for i in range(10):
+    weight_hidden, weight_output, bias_hidden, bias_output, network_output = one_pass(input, weight_hidden, weight_output, bias_hidden,
+                                                                                      bias_output, sigmoid, sigmoid_derivative, quad_cost_fxn, y)
+
+print(network_output)
 
 
-# Update cost_fxn
-grad_cost_fxn_output_layer, costs_list = do_cost_stuff(
-    grad_cost_fxn, y, a2, cost_fxn, costs_lists)
+def convert_one_hot_to_digit(network_output):
+    network_output = np.round(network_output).astype(int)
+
+    # for i in range(len(network_output)):
+    #     if network_output[i] <= 0.5:
+    #         network_output[i] = 0
+    #     else:
+    #         network_output[i] = 1
+    print(network_output)
 
 
-# backward_pass
-delta_output_layer, delta_hidden_layer, dC_db_hidden, dC_db_output, dC_dw_hidden, dC_dw_output = do_backprop(
-    grad_cost_fxn_output_layer, sigmoid_derivative_list, weight_output, activations_list)
-
-
-# Update parameters
-neta = 1
-weight_hidden, weight_output, bias_hidden, bias_output = update_params(
-    neta, weight_hidden, weight_output, dC_dw_hidden, dC_dw_output, dC_db_hidden, dC_db_output, bias_hidden, bias_output)
-print(weight_hidden)
-
-
-print("---second_pass----"*30)
-
-
-# forward pass again
-z1, a1, z2, a2, activations_list, zs_list, sigmoid_derivative_list, cost_fxn, grad_cost_fxn = compute_singals(input,
-                                                                                                              weight_hidden,
-                                                                                                              weight_output,
-                                                                                                              bias_hidden,
-                                                                                                              bias_output,
-                                                                                                              sigmoid,
-                                                                                                              sigmoid_derivative,
-                                                                                                              quad_cost_fxn)
-
-
-# def update_cost():
-#     cost_fxn, grad_cost_fxn = quad_cost_fxn()
-#     costs_list.append(cost_fxn(y, a2))
-#     print(costs_list)
-
-
-do_cost_stuff(
-    grad_cost_fxn, y, a2, cost_fxn, costs_list)
-"""
-
-
-
- # repeated code: *****************************************************************
- delta_output_layer = bp1(grad_cost_fxn_output_layer,
-                          sigmoid_derivative_list[-1])
-
-
- print("delta_output_layer_bp1 is: ")
- print(delta_output_layer)
-
- delta_hidden_layer = bp2(
-     weight_output, delta_output_layer, sigmoid_derivative_list[-2])
- print("delta_hidden_layer_bp2 is: ")
- print(delta_hidden_layer)
-
- all_delta = [delta_hidden_layer, delta_output_layer]
-
- dC_db = bp3(all_delta)  # hidden layer then output layer structure
- print("dC_db")
- print(dC_db)
- print(dC_db[1].shape)
- print(dC_db[2].shape)
-
- dC_dw = bp4(activations_list, all_delta)
- print("dC_dw")
- print(dC_dw)
- print(dC_dw[1].shape)
- print(dC_dw[2].shape)
-
- dC_dw_hidden = dC_dw[1]
- dC_dw_output = dC_dw[2]
- print("dC_dw_hidden")
- print(dC_dw_hidden)
- print(dC_dw_hidden.shape)
-
- print("dC_dw_output")
- print(dC_dw_output)
- print(dC_dw_output.shape)
- # now the weight update is done like this
- # w = w - neta dC_dw
- # b = b - neta dC_db
- # list_weight_output = weight_output.flatten()
- # list_weight_hidden = weight_hidden.flatten()
- # weight_list = np.concat((list_weight_hidden, list_weight_output))
-
- # print("weight_list")
- # print(weight_list)
- # print(weight_list.shape)
-
- neta = 4
- # weight_list = weight_list - neta * dC_dw_list
- # print("Updated weight list")
-
- weight_hidden = weight_hidden - neta * dC_dw_hidden
- weight_output = weight_output - neta * dC_dw_output
-
- # print(weight_list)
- print("updated weight_hidden")
- print(weight_hidden)
- print("updated weight_output")
- print(weight_output)
-
- dC_db_list = np.concat((dC_db[1], dC_db[2]))
-
- bias_list = np.concat((bias_hidden, bias_output))
- print("bias_list")
- print(bias_list)
- print(bias_list.shape)
-
- bias_list = bias_list - dC_db_list
- print("Updated bias list")
- print(bias_list)
-
- z1 = np.dot(weight_hidden, input) + bias_hidden
- print("z1 = W1 x + b1:", z1)
-
- a1 = sigmoid(z1)
- print("a1 = sigmoid(z1):", a1)
-
-
- z2 = np.dot(weight_output, a1) + bias_output
- print("z2 = W2 a1 + b2:", z2)
-
- a2 = sigmoid(z2)
- print("a2 = sigmoid(z2):", a2)
-
- cost_fxn, grad_cost_fxn = quad_cost_fxn()
- costs_list.append(cost_fxn(y, a2))
-
- print(costs_list)
- print("Decrease in cost is: ", costs_list[0] - costs_list[1])
-
- """
+convert_one_hot_to_digit(network_output)
